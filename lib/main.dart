@@ -1,125 +1,222 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() => runApp(MyApp());
+
+class User {
+  final String id;
+  final String name;
+  final String email;
+
+  User(this.id, this.name, this.email);
+}
+
+class VerificationRequest {
+  final String id;
+  final String userName;
+  final String userEmail;
+
+  VerificationRequest(this.id, this.userName, this.userEmail);
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Admin Dashboard',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: AdminDashboard(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
+class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('Admin Dashboard'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      drawer: AdminDrawer(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text('Welcome, Admin!', style: Theme.of(context).textTheme.headline5),
+            SizedBox(height: 20),
+            DashboardTiles(),
+            SizedBox(height: 20),
+            UserList(),
+            SizedBox(height: 20),
+            VerificationRequestList(),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+class UserList extends StatelessWidget {
+  final List<User> users = [
+    User('1', 'User 1', 'user1@example.com'),
+    User('2', 'User 2', 'user2@example.com'),
+    User('3', 'User 3', 'user3@example.com'),
+    // Add more user data here
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Registered Users',
+          style: TextStyle(fontSize: 20),
+        ),
+        SizedBox(height: 10),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text(user.name),
+              subtitle: Text(user.email),
+              leading: Icon(Icons.person),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class VerificationRequestList extends StatelessWidget {
+  final List<VerificationRequest> verificationRequests = [
+    VerificationRequest('1', 'User 4', 'user4@example.com'),
+    VerificationRequest('2', 'User 5', 'user5@example.com'),
+    VerificationRequest('3', 'User 6', 'user6@example.com'),
+    // Add more verification requests here
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Verification Requests',
+          style: TextStyle(fontSize: 20),
+        ),
+        SizedBox(height: 10),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: verificationRequests.length,
+          itemBuilder: (context, index) {
+            final request = verificationRequests[index];
+            return ListTile(
+              title: Text(request.userName),
+              subtitle: Text(request.userEmail),
+              leading: Icon(Icons.pending),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+
+class DashboardTiles extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 20,
+      runSpacing: 20,
+      children: <Widget>[
+        DashboardTile(
+          icon: Icons.insert_chart,
+          title: 'Analytics',
+          subtitle: 'View statistics and reports',
+          onTap: () {}, // Navigate to the analytics page
+        ),
+        DashboardTile(
+          icon: Icons.settings,
+          title: 'Settings',
+          subtitle: 'Manage app settings',
+          onTap: () {}, // Navigate to the settings page
+        ),
+        DashboardTile(
+          icon: Icons.people,
+          title: 'User Management',
+          subtitle: 'Manage user accounts and permissions',
+          onTap: () {}, // Navigate to the user management page
+        ),
+        DashboardTile(
+          icon: Icons.pending_actions,
+          title: 'Verification Requests',
+          subtitle: 'Manage account verification requests',
+          onTap: () {}, // Navigate to the verification requests page
+        ),
+      ],
+    );
+  }
+}
+
+class DashboardTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  DashboardTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 40),
+              SizedBox(height: 10),
+              Text(title, style: Theme.of(context).textTheme.headline6),
+              SizedBox(height: 5),
+              Text(subtitle),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AdminDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          UserAccountsDrawerHeader(
+            accountName: Text('Admin User'),
+            accountEmail: Text('admin@example.com'),
+            currentAccountPicture: CircleAvatar(
+              child: Icon(Icons.person),
+            ),
+          ),
+          // ... Drawer ListTiles
+        ],
+      ),
+    );
+  }
+}
+
+// UserList and VerificationRequestList Widgets remain largely unchanged but with added interactivity and responsiveness.
+

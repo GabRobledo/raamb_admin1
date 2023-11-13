@@ -4,26 +4,28 @@ import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../adminusers.dart';
 import '../databaseservice.dart';
+import 'lib/verificationsrequest.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter_application_1/lib/userdata.dart';
+import 'package:flutter/material.dart';
+import 'lib/UserList.dart';
+import 'lib/Verificationslist.dart';
 
 void main() {
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => UserData()),
-        ChangeNotifierProvider(create: (context) => VerificationRequestData()),
-      ],
+    ChangeNotifierProvider(
+      create: (context) => DatabaseService()..connectAndListen(),
       child: MyApp(),
     ),
   );
 }
 
-// Assuming User and VerificationRequest have a named constructor for JSON parsing
+
 class User {
   final String id;
   final String name;
   final String email;
-  final String role; // Added role field
+  final String role;
 
   User(this.id, this.name, this.email, this.role);
 
@@ -32,83 +34,12 @@ class User {
       json['_id'],
       json['name'],
       json['email'],
-      json['role'], // Assuming 'role' field exists in your JSON
+      json['role'],
     );
   }
 }
 
-class VerificationRequest {
-  final String id;
-  final String userName;
-  final String userEmail;
 
-  VerificationRequest(this.id, this.userName, this.userEmail);
-
-  factory VerificationRequest.fromJson(Map<String, dynamic> json) {
-    return VerificationRequest(
-      json['_id'],
-      json['userName'],
-      json['userEmail'],
-    );
-  }
-}
-
-class UserData with ChangeNotifier {
-  IO.Socket? socket;
-  List<User> _users = [];
-  List<User> get users => _users;
-
-  UserData() {
-    _initSocket();
-  }
-
-  void _initSocket() {
-    if (socket == null) {
-      socket = IO.io('http://192.168.1.7:3000', <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-      });
-      socket?.connect();
-
-      socket?.on('users', (data) {
-        _users = (data as List).map((u) => User.fromJson(u)).toList();
-        notifyListeners();
-      });
-
-      socket?.on('error', (data) => print('Socket Error: $data'));
-      socket?.on('disconnect', (_) => print('Disconnected'));
-    }
-  }
-  Future<void> fetchUsers() async {
-    socket?.emit('request-users');
-  }
-  @override
-  void dispose() {
-    socket?.disconnect();
-    super.dispose();
-  }
-}
-
-
-
-
-// VerificationRequestData Provider
-class VerificationRequestData with ChangeNotifier {
-  List<VerificationRequest> _verificationRequests = [];
-  List<VerificationRequest> get verificationRequests => _verificationRequests;
-
-  Future<void> fetchVerificationRequests() async {
-    final response = await http.get(Uri.parse('http://your-api-url/verification-requests'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> verificationRequestsJson = json.decode(response.body);
-      _verificationRequests = verificationRequestsJson.map((json) => VerificationRequest.fromJson(json)).toList();
-      notifyListeners();
-    } else {
-      throw Exception('Failed to load verification requests');
-    }
-  }
-}
 
 class MyApp extends StatelessWidget {
   @override
@@ -118,20 +49,30 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: AppBarTheme(
+          color: Colors.blueGrey, // Custom color for AppBar
+        ),
+        cardTheme: CardTheme(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 4,
+        ),
       ),
       home: AdminDashboard(),
     );
   }
 }
 
+
 class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final databaseService = Provider.of<DatabaseService>(context, listen: false);
+    databaseService.fetchVerificationRequests(); // Fetch verification requests
     return Scaffold(
       appBar: AppBar(
         title: Text('Admin Dashboard'),
       ),
-      drawer: AdminDrawer(),
+      // drawer: AdminDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -140,10 +81,11 @@ class AdminDashboard extends StatelessWidget {
             Text('Welcome, Admin!', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 20),
             DashboardTiles(),
-            SizedBox(height: 20),
-            UserList(),
-            SizedBox(height: 20),
-            VerificationRequestList(),
+            SizedBox(height: 100),
+            // UserList(),
+            // VerificationRequestList(),
+            // SizedBox(height: 20),
+            // VerificationRequestList(),
           ],
         ),
       ),
@@ -151,108 +93,116 @@ class AdminDashboard extends StatelessWidget {
   }
 }
 
-class UserList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<UserData>(
-      builder: (context, userData, child) {
-        if (userData.users.isEmpty) {
-          // If the list is empty, it may be loading, so show a progress indicator
-          return Center(child: CircularProgressIndicator());
-        } else {
-          // If the list has data, build a ListView with the data
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(), // Disable ListView's scrolling since it's inside a SingleChildScrollView
-            itemCount: userData.users.length,
-            itemBuilder: (context, index) {
-              final user = userData.users[index];
-              return ListTile(
-                title: Text(user.name),
-                subtitle: Text(user.email),
-                leading: Icon(Icons.person),
-              );
-            },
-          );
-        }
-      },
-    );
-  }
-}
+// class UserList extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Consumer<DatabaseService>(
+//       builder: (context, databaseService, child) {
+//         if (databaseService.users.isEmpty) {
+//           return Center(child: CircularProgressIndicator());
+//         }
+//          else {
+//           return ListView.builder(
+//             itemCount: databaseService.users.length,
+//             shrinkWrap: true,
+//             physics: NeverScrollableScrollPhysics(),
+//             itemBuilder: (context, index) {
+//               final user = databaseService.users[index];
+//               return Card(
+//                 child: ListTile(
+//                   title: Text(user.name, style: TextStyle(fontWeight: FontWeight.bold)),
+//                   subtitle: Text(user.email),
+//                   leading: CircleAvatar(
+//                     backgroundColor: Theme.of(context).primaryColor,
+//                     child: Text(user.name[0], style: TextStyle(color: Colors.white)), 
+//                   ),
+//                   trailing: Icon(Icons.arrow_forward_ios),
+//                 ),
+//               );
+//             },
+//           );
+//         }
+//       },
+//     );
+//   }
+// }
+
+// class VerificationRequestList extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Consumer<DatabaseService>(
+//       builder: (context, databaseService, child) {
+//         if (databaseService.verificationRequests.isEmpty) {
+//           return Center(child: CircularProgressIndicator());
+//         } else {
+//           return ListView.separated(
+//             separatorBuilder: (context, index) => Divider(height: 1),
+//             shrinkWrap: true,
+//             physics: NeverScrollableScrollPhysics(),
+//             itemCount: databaseService.verificationRequests.length,
+//             itemBuilder: (context, index) {
+//               final request = databaseService.verificationRequests[index];
+//               return Card(
+//                 margin: EdgeInsets.symmetric(vertical: 8),
+//                 child: ListTile(
+//                   leading: CircleAvatar(
+//                     // Use an icon or initials as per your data
+//                     child: Icon(Icons.verified_user),
+//                   ),
+//                   title: Text(
+//                     request.mobileNumber,
+//                     style: TextStyle(fontWeight: FontWeight.bold),
+//                   ),
+//                   subtitle: Text('Additional details here'), // Display more information if available
+//                   trailing: Icon(Icons.arrow_forward_ios),
+//                   contentPadding: EdgeInsets.all(16), // Increased padding for larger size
+//                   onTap: () {
+//                     // Handle item tap if needed
+//                   },
+//                 ),
+//               );
+//             },
+//           );
+//         }
+//       },
+//     );
+//   }
+// }
 
 
-
-class VerificationRequestList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Using a Consumer widget to listen to VerificationRequestData changes
-    return Consumer<VerificationRequestData>(
-      builder: (context, verificationRequestData, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Verification Requests', style: TextStyle(fontSize: 20)),
-            SizedBox(height: 10),
-            verificationRequestData.verificationRequests.isEmpty
-                ? CircularProgressIndicator() // Show a loading indicator while fetching data
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(), // to disable ListView's scrolling
-                    itemCount: verificationRequestData.verificationRequests.length,
-                    itemBuilder: (context, index) {
-                      final request = verificationRequestData.verificationRequests[index];
-                      return ListTile(
-                        title: Text(request.userName),
-                        subtitle: Text(request.userEmail),
-                        leading: Icon(Icons.verified_user),
-                      );
-                    },
-                  ),
-          ],
-        );
-      },
-    );
-  }
-}
 
 
 class DashboardTiles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 20,
-      runSpacing: 20,
+    return GridView.count(
+      crossAxisCount: 3,
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
+      shrinkWrap: true,
       children: <Widget>[
         DashboardTile(
-          icon: Icons.insert_chart,
-          title: 'Analytics',
-          subtitle: 'View statistics and reports',
-          onTap: () {}, // Navigate to the analytics page
-        ),
-        ElevatedButton(
-  onPressed: () {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AdminUsersPage()));
-  },
-  child: Text('View Registered Users'),
-),
-
-
-        DashboardTile(
           icon: Icons.people,
-          title: 'User Management',
-          subtitle: 'Manage user accounts and permissions',
-          onTap: () {}, // Navigate to the user management page
+          title: 'User Lists',
+          subtitle: 'User Accounts Registed to RAAMB',
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => UserManagementPage()));
+          },
         ),
-        DashboardTile(
-          icon: Icons.pending_actions,
-          title: 'Verification Requests',
-          subtitle: 'Manage account verification requests',
-          onTap: () {}, // Navigate to the verification requests page
-        ),
+        // DashboardTile(
+        //   icon: Icons.pending_actions,
+        //   title: 'Verification Requests',
+        //   subtitle: 'Manage account verification requests',
+        //   onTap: () {
+        //     Navigator.push(context, MaterialPageRoute(builder: (context) => VerificationRequestsPage()));
+        //   },
+        // ),
       ],
     );
   }
 }
+
+
 
 class DashboardTile extends StatelessWidget {
   final IconData icon;
@@ -264,26 +214,39 @@ class DashboardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 40),
-              SizedBox(height: 10),
-              Text(title, style: Theme.of(context).textTheme.headline6),
-              SizedBox(height: 5),
-              Text(subtitle),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(icon, size: 40, color: Theme.of(context).primaryColor),
+            SizedBox(height: 15),
+            Text(title, style: Theme.of(context).textTheme.headline6),
+            SizedBox(height: 8),
+            Text(subtitle, textAlign: TextAlign.center),
+          ],
         ),
       ),
     );
   }
 }
+
+
+  
 
 class AdminDrawer extends StatelessWidget {
   @override
@@ -306,5 +269,5 @@ class AdminDrawer extends StatelessWidget {
   }
 }
 
-// UserList and VerificationRequestList Widgets remain largely unchanged but with added interactivity and responsiveness.
+
 

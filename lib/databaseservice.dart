@@ -1,37 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_application_1/lib/userdata.dart'; // Update the path as necessary
-import 'lib/verificationsrequest.dart'; // Update the path as necessary
+import 'lib/verificationsrequest.dart';
+import 'package:mongo_service.dart';// Update the path as necessary
+import 'dart:ffi';
+import 'package:flutter/material.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 
-class DatabaseService with ChangeNotifier {
-  IO.Socket? _socket;
-  List<User> _users = [];
-  List<VerificationRequest> _verificationRequests = [];
+final connectionUri =
+    'mongodb+srv://cravewolf:fBQcL0gSMNpOw0zg@cluster0.manlfyy.mongodb.net/?retryWrites=true&w=majority';
 
-  List<User> get users => _users;
-  List<VerificationRequest> get verificationRequests => _verificationRequests;
+Db? _db;
 
-  // Initialize socket connection
-  void initSocket() {
-    if (_socket == null) {
-      _socket = IO.io('http://192.168.1.7:3000', <String, dynamic>{ // Update with your actual server address
-        'transports': ['websocket'],
-        'autoConnect': false,
-      });
-      _socket?.connect();
-      _setupSocketListeners();
-      connectAndListen();
-    }
+Future<Db> getDb() async {
+  if (_db == null) {
+    _db = await Db.create(connectionUri);
+    await _db!.open();
   }
-
-  // Connect and set up listeners
-  void connectAndListen() {
-    if (_socket == null) {
-      initSocket();
-    } else {
-      _socket!.connect();
-    }
-  }
+  return _db!;
+}
 
   // Method to fetch verification requests
   void fetchVerificationRequests() {

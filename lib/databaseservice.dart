@@ -15,10 +15,11 @@ class DatabaseService with ChangeNotifier {
   Future<void> fetchUsers() async {
     
     try {
-      final response = await http.get(Uri.parse('https://raamb-admin1-nvky.vercel.app/users')); // Update with your server URL
+      final response = await http.get(Uri.parse('https://raamb-admin1-nvky-cravewolf.vercel.app/users')); // Update with your server URL
       if (response.statusCode == 200) {
         _users = (json.decode(response.body) as List).map((u) => User.fromMap(u)).toList();
         notifyListeners();
+        print ('twerk');
         
       } else {
         print('Failed to fetch users. Status Code: ${response.statusCode}');
@@ -34,7 +35,7 @@ class DatabaseService with ChangeNotifier {
   // Method to fetch verification requests from MongoDB via your server
   Future<void> fetchVerificationRequests() async {
     try {
-      final response = await http.get(Uri.parse('https://raamb-admin1-nvky.vercel.app/verification-requests')); // Update with your server URL
+      final response = await http.get(Uri.parse('https://raamb-admin1-nvky-cravewolf.vercel.app/verification-requests')); // Update with your server URL
       if (response.statusCode == 200) {
         _verificationRequests = (json.decode(response.body) as List).map((v) => VerificationRequest.fromMap(v)).toList();
         notifyListeners();

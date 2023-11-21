@@ -16,7 +16,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   @override
   void initState() {
     super.initState();
-    dbService.connectAndListen(); // Connect to Socket.IO server
+   // Connect to Socket.IO server
   }
 
   @override
@@ -28,7 +28,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => DatabaseService()..connectAndListen(),
+      create: (_) => DatabaseService(),
       child: Scaffold(
         appBar: AppBar(title: Text('Admin - Registered Users')),
         body: Consumer<DatabaseService>(

@@ -14,31 +14,11 @@ import 'lib/Verificationslist.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => DatabaseService()..connectAndListen(),
+      create: (context) => DatabaseService(),
       child: MyApp(),
     ),
   );
 }
-
-
-class User {
-  final String id;
-  final String name;
-  final String email;
-  final String role;
-
-  User(this.id, this.name, this.email, this.role);
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      json['_id'],
-      json['name'],
-      json['email'],
-      json['role'],
-    );
-  }
-}
-
 
 
 class MyApp extends StatelessWidget {
@@ -49,30 +29,23 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: AppBarTheme(
-          color: Colors.blueGrey, // Custom color for AppBar
-        ),
-        cardTheme: CardTheme(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          elevation: 4,
-        ),
+        appBarTheme: AppBarTheme(color: Colors.blueGrey),
+        cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 4),
       ),
       home: AdminDashboard(),
     );
   }
 }
 
-
 class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final databaseService = Provider.of<DatabaseService>(context, listen: false);
-    databaseService.fetchVerificationRequests(); // Fetch verification requests
+    final databaseService = Provider.of<DatabaseService>(context);
+    databaseService.fetchVerificationRequests();
+    databaseService.fetchUsers();  // Trigger fetching verification requests
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Admin Dashboard'),
-      ),
-      // drawer: AdminDrawer(),
+      appBar: AppBar(title: Text('Admin Dashboard')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -82,95 +55,15 @@ class AdminDashboard extends StatelessWidget {
             SizedBox(height: 20),
             DashboardTiles(),
             SizedBox(height: 100),
-            // UserList(),
-            // VerificationRequestList(),
-            // SizedBox(height: 20),
-            // VerificationRequestList(),
+            // UserList(), // Uncomment when ready
+            // VerificationRequestList(), // Uncomment when ready
           ],
         ),
       ),
+      drawer: AdminDrawer(), // Drawer for additional navigation
     );
   }
 }
-
-// class UserList extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Consumer<DatabaseService>(
-//       builder: (context, databaseService, child) {
-//         if (databaseService.users.isEmpty) {
-//           return Center(child: CircularProgressIndicator());
-//         }
-//          else {
-//           return ListView.builder(
-//             itemCount: databaseService.users.length,
-//             shrinkWrap: true,
-//             physics: NeverScrollableScrollPhysics(),
-//             itemBuilder: (context, index) {
-//               final user = databaseService.users[index];
-//               return Card(
-//                 child: ListTile(
-//                   title: Text(user.name, style: TextStyle(fontWeight: FontWeight.bold)),
-//                   subtitle: Text(user.email),
-//                   leading: CircleAvatar(
-//                     backgroundColor: Theme.of(context).primaryColor,
-//                     child: Text(user.name[0], style: TextStyle(color: Colors.white)), 
-//                   ),
-//                   trailing: Icon(Icons.arrow_forward_ios),
-//                 ),
-//               );
-//             },
-//           );
-//         }
-//       },
-//     );
-//   }
-// }
-
-// class VerificationRequestList extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Consumer<DatabaseService>(
-//       builder: (context, databaseService, child) {
-//         if (databaseService.verificationRequests.isEmpty) {
-//           return Center(child: CircularProgressIndicator());
-//         } else {
-//           return ListView.separated(
-//             separatorBuilder: (context, index) => Divider(height: 1),
-//             shrinkWrap: true,
-//             physics: NeverScrollableScrollPhysics(),
-//             itemCount: databaseService.verificationRequests.length,
-//             itemBuilder: (context, index) {
-//               final request = databaseService.verificationRequests[index];
-//               return Card(
-//                 margin: EdgeInsets.symmetric(vertical: 8),
-//                 child: ListTile(
-//                   leading: CircleAvatar(
-//                     // Use an icon or initials as per your data
-//                     child: Icon(Icons.verified_user),
-//                   ),
-//                   title: Text(
-//                     request.mobileNumber,
-//                     style: TextStyle(fontWeight: FontWeight.bold),
-//                   ),
-//                   subtitle: Text('Additional details here'), // Display more information if available
-//                   trailing: Icon(Icons.arrow_forward_ios),
-//                   contentPadding: EdgeInsets.all(16), // Increased padding for larger size
-//                   onTap: () {
-//                     // Handle item tap if needed
-//                   },
-//                 ),
-//               );
-//             },
-//           );
-//         }
-//       },
-//     );
-//   }
-// }
-
-
-
 
 class DashboardTiles extends StatelessWidget {
   @override
@@ -189,14 +82,7 @@ class DashboardTiles extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => UserManagementPage()));
           },
         ),
-        // DashboardTile(
-        //   icon: Icons.pending_actions,
-        //   title: 'Verification Requests',
-        //   subtitle: 'Manage account verification requests',
-        //   onTap: () {
-        //     Navigator.push(context, MaterialPageRoute(builder: (context) => VerificationRequestsPage()));
-        //   },
-        // ),
+       
       ],
     );
   }
